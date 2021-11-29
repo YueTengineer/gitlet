@@ -2,27 +2,10 @@ package gitobject;
 
 import fileoperation.FileReader;
 import sha1.SHA1;
-import zlib.ZLibUtils;
 
 import java.io.*;
-import java.util.List;
-import java.util.Scanner;
 
 public class Blob extends GitObject{
-
-	public String getFmt(){
-        return fmt;
-    }
-    public String getMode(){
-        return mode;
-    }
-    public String getPath() {
-        return path;
-    }
-    public String getValue(){
-        return value;
-    }
-    public String getKey() { return key; }
 
     public Blob(){};
     /**
@@ -35,8 +18,15 @@ public class Blob extends GitObject{
         mode = "100644";
         value = genValue(file);
         name = file.getName();
-        key = genKey(file);
-        if (!FileReader.objectExists(key)) { compressWrite();}
+        key = genKey();
+    }
+
+    public Blob(File file, String name) throws Exception {
+        fmt = "blob";
+        mode = "100644";
+        value = genValue(file);
+        this.name = name;
+        key = genKey();
     }
 
     /**
@@ -44,12 +34,10 @@ public class Blob extends GitObject{
      * @param Id
      * @throws IOException
      */
-    public static Blob deserialize(String Id) throws IOException {
+    public static Blob deserialize(String Id)  {
         try{
 
-            File file = new File(path +  File.separator + Id.substring(0,2) + File.separator + Id.substring(2));
-
-            return FileReader.readCompressedObject(file, Blob.class);
+            return FileReader.readCompressedObj(path +  File.separator + Id.substring(0,2) + File.separator + Id.substring(2), Blob.class);
 
         }
         catch (Exception e){
@@ -59,31 +47,19 @@ public class Blob extends GitObject{
         return null;
     }
 
-
-
-    public String genValue(File file) throws IOException {
-        StringBuffer bf = new StringBuffer();
-
-        Scanner input = new Scanner(file);
-        while (input.hasNextLine()) {
-            bf.append(input.nextLine());
-        }
-        input.close();
-
-        return bf.toString();
+    public String genValue(File file)  {
+        return FileReader.readContentsAsString(file);
     }
 
     /**
      * Generate key from file.
-     * @param file
+     * @param
      * @return String
      * @throws Exception
      */
-    public String genKey(File file) throws Exception {
+    public String genKey() throws Exception {
         return SHA1.getHash("100644 blob " + value);
     }
-
-
 
     @Override
     public String toString(){

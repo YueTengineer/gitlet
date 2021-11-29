@@ -1,17 +1,40 @@
 package fileoperation;
 
-import gitobject.Blob;
 import repository.Repository;
-import zlib.ZLibUtils;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.zip.GZIPInputStream;
 
 public class FileReader {
 
+    /* READING AND WRITING FILE CONTENTS */
+
+    /** Return the entire contents of FILE as a byte array.  FILE must
+     *  be a normal file.  Throws IllegalArgumentException
+     *  in case of problems. */
+    static byte[] readContents(File file) {
+        if (!file.isFile()) {
+            throw new IllegalArgumentException("must be a normal file");
+        }
+        try {
+            return Files.readAllBytes(file.toPath());
+        } catch (IOException excp) {
+            throw new IllegalArgumentException(excp.getMessage());
+        }
+    }
+
+    /** Return the entire contents of FILE as a String.  FILE must
+     *  be a normal file.  Throws IllegalArgumentException
+     *  in case of problems. */
+    public static String readContentsAsString(File file) {
+        return new String(readContents(file), StandardCharsets.UTF_8);
+    }
+
     /**
-     * Check if the file is serialized in .git/objects
+     * Check if the file is already serialized in .git/objects
     * */
     public static boolean objectExists(String id) {
         String path = Repository.getGitDir() + File.separator + "objects";
@@ -27,20 +50,34 @@ public class FileReader {
 
     }
 
-    /** Return an object of type T read from a compressed FILE, casting it to EXPECTEDCLASS.
+    /** Return an object of type T read from FILE, casting it to EXPECTEDCLASS.
      *  Throws IllegalArgumentException in case of problems. */
-    public static <T extends Serializable> T readCompressedObject(File file, Class<T> expectedClass) {
+    static <T extends Serializable> T readObject(String filepath,
+                                                 Class<T> expectedClass) {
         try {
-            byte[] decompressed = ZLibUtils.decompress(new FileInputStream(file));
-            ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(decompressed));
+            ObjectInputStream in =
+                    new ObjectInputStream(new FileInputStream(new File(filepath)));
             T result = expectedClass.cast(in.readObject());
             in.close();
             return result;
+        } catch (IOException | ClassCastException
+                | ClassNotFoundException excp) {
+            throw new IllegalArgumentException(excp.getMessage());
+        }
+    }
 
-        } catch (IOException | ClassCastException | ClassNotFoundException e) {
-
+    /** Return an object of type T read from compressed FILE, casting it to EXPECTEDCLASS.
+     *  Throws IllegalArgumentException in case of problems. */
+    public static <T extends Serializable> T readCompressedObj(String filepath, Class<T> expectedclass) {
+        try{
+            ObjectInputStream ois =
+                    new ObjectInputStream(new GZIPInputStream(new FileInputStream(new File(filepath))));
+            T result = expectedclass.cast(ois.readObject());
+            ois.close();
+            return result;
+        } catch (IOException | ClassCastException
+                | ClassNotFoundException e) {
             throw new IllegalArgumentException(e.getMessage());
-
         }
     }
 

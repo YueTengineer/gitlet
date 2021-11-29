@@ -2,13 +2,10 @@ package repository;
 
 import java.io.File;
 import java.io.IOException;
+import fileoperation.FileCreation;
+import gitobject.Head;
+import gitobject.Index;
 
-/**
- * Todo: Add your own code. JitInit.init("worktree") should be able to create a repository "worktree/.jit" ,
- *       which contains all the default files and other repositories inside. If the repository has
- *       already exists, delete the former one and create a new one. You're welcome to reconstruct the code,
- *       but don't change the code in the core directory.
- */
 public class Repository {
     private static String workTree;	//working directory
     private static String gitDir;	//jit repository path
@@ -58,9 +55,29 @@ public class Repository {
      * @throws IOException
      */
     public void createRepo() throws IOException {
-    /* Todo：Add your code here. */
+        File file = new File(gitDir);
 
-
+        if(!file.exists()){
+            file.mkdirs();
+        }
+        //创建名为logs的空文件夹，存储不同分支下commit记录
+        FileCreation.createDirectory(gitDir, "logs");
+        //创建名为objects的空文件夹，保存blob,tree,commit对象hash文件
+        FileCreation.createDirectory(gitDir, "objects");
+        //创建名为refs的空文件夹，保存不同分支的具体信息
+        FileCreation.createDirectory(gitDir, "refs");
+        //在logs文件夹下创建refs文件夹
+        FileCreation.createDirectory(gitDir, "logs", "refs");
+        //在logs文件夹下的refs的文件夹下创建heads文件夹
+        FileCreation.createDirectory(gitDir, "logs", "refs", "heads");
+        //在refs文件夹下创建heads文件夹
+        FileCreation.createDirectory(gitDir, "refs", "heads");
+        //初始化并将HEAD文件写入.jit/ 文件夹
+        Head head = new Head();
+        head.compressWrite();
+        //初始化并将index文件写入.jit/ 文件夹
+        Index index = new Index();
+        index.compressWrite();
     }
 
 }

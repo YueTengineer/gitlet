@@ -2,12 +2,10 @@ package gitobject;
 
 import sha1.SHA1;
 
-import zlib.ZLibUtils;
 import fileoperation.FileReader;
 
 import java.io.*;
-import java.lang.reflect.Array;
-import java.security.MessageDigest;
+
 import java.util.*;
 
 
@@ -20,14 +18,23 @@ public class Tree extends GitObject{
         return treeList;
     }
 
-    private static ArrayList<GitObject> constructTree(File file) {
+    private static ArrayList<GitObject> constructTree(File dir) {
+        return constructTree(dir, dir.getName());
+    }
+
+    // workTree下文件对应的Blob名称 01.txt
+    // workTree下文件夹内对应的Blob名称 test/01.txt ; test/test1/01.txt
+
+    private static ArrayList<GitObject> constructTree(File dir, String name) {
         ArrayList<GitObject> ls = new ArrayList<>();
-        List<File> files = sortFile(file.listFiles());
+        List<File> files = sortFile(dir.listFiles());
 
         for(File f : files) {
+            String newname = name + File.separator + f.getName();
+
             if (f.isFile()) {
                 try {
-                    Blob b = new Blob(f);
+                    Blob b = new Blob(f, newname);
                     ls.add(b);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -35,7 +42,7 @@ public class Tree extends GitObject{
             }
             else {
                 try {
-                    Tree t = new Tree(f, constructTree(f));
+                    Tree t = new Tree(f, constructTree(f, newname));
                     ls.add(t);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -45,35 +52,38 @@ public class Tree extends GitObject{
         return ls;
     }
 
-    public Tree(){}
+    public Tree(){
+        this.fmt = "tree";
+        this.mode = "040000";
+        this.treeList = new ArrayList<>();
+    }
     
     /**
      * Constructor
-     * @param file
+     * @param dir
      * @throws Exception
      */
-    public Tree(File file) throws Exception {
+    public Tree(File dir) throws Exception {
 
-        if (file.isFile()) throw new IllegalArgumentException("Must be a directory.");
-        this.treeList = constructTree(file);
+        if (dir.isFile()) throw new IllegalArgumentException("Must be a directory.");
+        this.treeList = constructTree(dir);
         this.fmt = "tree";
         this.mode = "040000";
-        this.name = file.getName();
+        this.name = dir.getName();
         this.value = genValue();
-        this.key = genKey(file);
-        if (!FileReader.objectExists(key)) { compressWrite();}
+        this.key = genKey();
     }
 
-    public Tree(File file, ArrayList ls) throws Exception {
 
-        if (file.isFile()) throw new IllegalArgumentException("Must be a directory.");
+    public Tree(File dir, ArrayList ls) throws Exception {
+
+        if (dir.isFile()) throw new IllegalArgumentException("Must be a directory.");
         this.treeList = ls;
         this.fmt = "tree";
         this.mode = "040000";
-        this.name = file.getName();
+        this.name = dir.getName();
         this.value = genValue();
-        this.key = genKey(file);
-        if (!FileReader.objectExists(key)) { compressWrite();}
+        this.key = genKey();
     }
 
     /**
@@ -82,12 +92,10 @@ public class Tree extends GitObject{
      * @param Id
      * @throws IOException
      */
-    public static Tree deserialize(String Id) throws IOException {
+    public static Tree deserialize(String Id)  {
         try{
 
-            File file = new File(path +  File.separator + Id.substring(0,2) + File.separator + Id.substring(2));
-
-            return FileReader.readCompressedObject(file, Tree.class);
+            return FileReader.readCompressedObj(path +  File.separator + Id.substring(0,2) + File.separator + Id.substring(2), Tree.class);
 
         }
         catch (Exception e){
@@ -131,12 +139,21 @@ public class Tree extends GitObject{
 
     /**
      * Generate the key of a tree object.
-     * @param dir
+     * @param
      * @return String
      * @throws Exception
      */
-    public String genKey(File dir) throws Exception{
+    public String genKey() throws Exception{
         return SHA1.getHash("040000 tree " + value);
+    }
+
+    public void add(GitObject go) {
+        this.treeList.add(go);
+    }
+
+    public void update() throws Exception {
+        this.value = genValue();
+        this.key = SHA1.getHash("040000 tree " + value);
     }
 
     @Override

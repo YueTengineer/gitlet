@@ -1,8 +1,12 @@
 package core;
 
-import fileoperation.FileDeletion;
+import fileoperation.FileCreation;
+
+import gitobject.Blob;
+import gitobject.Tree;
 import repository.Repository;
 
+import java.io.File;
 import java.io.IOException;
 
 public class JitHash {
@@ -14,5 +18,28 @@ public class JitHash {
     public static void hash(String filename) throws IOException {
         /* Todo: You should pass the filename in this function, and generate a hash file in your repository.
         *   Add your code here.*/
+        File file = new File(filename);
+        if (!file.exists()) {
+            System.out.println(filename +  "does not exist.");
+            return;
+        }
+
+        if(file.isFile()){
+            try{
+                Blob blob = new Blob(file);
+                blob.compressWrite();
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+        if(file.isDirectory()){
+            try {
+                Tree tree = new Tree(file);
+                tree.compressWrite();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
     }
 }
