@@ -14,6 +14,7 @@ public class JitCommit {
             // 将暂存区生成的树、commit类、暂存区内包含的所有的树全部存入objects文件夹中
             root.compressWrite();
             com.compressWrite();
+            System.out.println("Commit key 为：" +com.getKey());
             writeTree(root);
             //将HEAD指针指向当前Commit，覆盖原有指针.
             Head head = new Head(com);
@@ -36,7 +37,7 @@ public class JitCommit {
 
             if (fmt.equals("tree")) {
                 String key = go.getKey();
-                if (!FileReader.objectExists(key)) go.compressWrite();
+                go.compressWrite();
                 writeTree((Tree)go);
             }
         }

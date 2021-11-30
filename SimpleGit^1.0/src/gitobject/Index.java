@@ -173,7 +173,6 @@ public class Index implements Serializable {
         }
     }
 
-
     public static String getPath() {
         return path;
     }

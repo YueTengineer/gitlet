@@ -1,5 +1,6 @@
 package gitobject;
 import fileoperation.FileCreation;
+import fileoperation.FileReader;
 import repository.Repository;
 
 import java.io.*;
@@ -49,7 +50,11 @@ public class GitObject implements Serializable {
      * @throws Exception
      */
     public void compressWrite() throws Exception{
-        FileCreation.createDirectory(path, key.substring(0,2));
+        // 已存在对应文件，return
+        if (FileReader.objectExists(key)) return;
+        // 查看是否存在objects下的前两位文件夹，没有则新建
+        File first = new File(path + File.separator + key.substring(0,2));
+        if(!first.exists()) FileCreation.createDirectory(path, key.substring(0,2));
         FileWriter.writeCompressedObj(path + File.separator + key.substring(0, 2) + File.separator + key.substring(2), this);
     }
 
