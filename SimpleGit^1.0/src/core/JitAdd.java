@@ -24,7 +24,6 @@ public class JitAdd {
                 try {
                     Blob b = new Blob(f);
                     index.add(b);
-
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

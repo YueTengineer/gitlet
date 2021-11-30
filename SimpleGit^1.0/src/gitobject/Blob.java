@@ -21,6 +21,7 @@ public class Blob extends GitObject{
         key = genKey();
     }
 
+    //主要用于建树时Blob命名.
     public Blob(File file, String name) throws Exception {
         fmt = "blob";
         mode = "100644";

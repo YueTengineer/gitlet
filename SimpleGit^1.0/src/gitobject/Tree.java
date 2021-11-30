@@ -42,7 +42,7 @@ public class Tree extends GitObject{
             }
             else {
                 try {
-                    Tree t = new Tree(f, constructTree(f, newname));
+                    Tree t = new Tree(f, constructTree(f, newname), newname);
                     ls.add(t);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -74,14 +74,14 @@ public class Tree extends GitObject{
         this.key = genKey();
     }
 
-
-    public Tree(File dir, ArrayList ls) throws Exception {
+    //主要用于建树时Tree命名以及treelist赋值.
+    public Tree(File dir, ArrayList ls, String name) throws Exception {
 
         if (dir.isFile()) throw new IllegalArgumentException("Must be a directory.");
         this.treeList = ls;
         this.fmt = "tree";
         this.mode = "040000";
-        this.name = dir.getName();
+        this.name = name;
         this.value = genValue();
         this.key = genKey();
     }
@@ -151,9 +151,41 @@ public class Tree extends GitObject{
         this.treeList.add(go);
     }
 
-    public void update() throws Exception {
-        this.value = genValue();
-        this.key = SHA1.getHash("040000 tree " + value);
+    public void delete (String name) {
+        int size = treeList.size();
+        for (int i = 0; i < size; i ++) {
+            GitObject go = treeList.get(i);
+            if (go.getName().equals(name)) {
+                treeList.remove(i);
+                return;
+            }
+        }
+    }
+
+    public void update() {
+        try {
+            this.value = genValue();
+            this.key = SHA1.getHash("040000 tree " + value);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void traverse() {
+        System.out.println(this.toString() + " " + this.getName());
+        traverse(this);
+    }
+
+    private void traverse(Tree root) {
+        System.out.println(root.getValue());
+        for (GitObject go : root.getTreeList()) {
+            String fmt = go.getFmt();
+            if (fmt.equals("tree")) {
+                Tree t = (Tree) go;
+                traverse(t);
+            }
+        }
     }
 
     @Override

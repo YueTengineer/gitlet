@@ -14,8 +14,7 @@ class JitTest {
     public static void main(String[] args) {
         try {
             createRepository();
-            testAdd();
-            testCommit();
+            testIndex();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -87,5 +86,60 @@ class JitTest {
         Index index = FileReader.readCompressedObj(Index.getPath(),Index.class);
         index.getValue();
     }
+
+    public static void testIndex() {
+        try {
+            JitAdd.add("a.txt");
+            JitAdd.add("testTree");
+            //读入index文件
+            Index index = FileReader.readCompressedObj(Index.getPath(),Index.class);
+
+            //显示暂存区文件
+            System.out.println("Valuemap:");
+            index.getValue();
+            System.out.print("\n");
+            //显示root内文件
+            System.out.println("Root:");
+            index.root.traverse();
+
+            //删除 testTree/testTree1 文件夹.
+            System.out.println("testTree1 deleted.");
+            index.deleteDirectory("testTree" + File.separator + "testTree1");
+            //显示暂存区文件
+            System.out.println("Valuemap:");
+            index.getValue();
+            System.out.print("\n");
+            //显示root内文件
+            System.out.println("Root:");
+            index.root.traverse();
+
+            /*
+            //删除 testTree
+            System.out.println("testTree deleted.");
+            index.deleteDirectory("testTree");
+            //显示暂存区文件
+            System.out.println("Valuemap:");
+            index.getValue();
+            System.out.print("\n");
+            //显示root内文件
+            System.out.println("Root:");
+            index.root.traverse();
+
+
+            //删除a.txt
+            System.out.println("a.txt deleted.");
+            index.deleteFile("a.txt");
+            //显示暂存区文件
+            index.getValue();
+            //显示root内文件
+            index.root.traverse();
+
+            */
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
 
 }
