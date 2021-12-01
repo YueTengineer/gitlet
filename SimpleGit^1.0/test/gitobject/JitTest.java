@@ -1,9 +1,6 @@
 package gitobject;
 
-import core.JitAdd;
-import core.JitCommit;
-import core.JitHash;
-import core.JitInit;
+import core.*;
 import fileoperation.FileReader;
 
 import java.io.File;
@@ -15,7 +12,7 @@ class JitTest {
     public static void main(String[] args) {
         try {
             createRepository();
-            testHash();
+            testRm();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -203,6 +200,64 @@ class JitTest {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+    }
+
+    public static void testRm() {
+        try {
+            JitAdd.add("a.txt");
+            JitAdd.add("testTree");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        //读入index文件
+        Index index = FileReader.readCompressedObj(Index.getPath(),Index.class);
+
+        //显示暂存区文件
+        System.out.println("Valuemap:");
+        index.getValue();
+        System.out.print("\n");
+        //显示root内文件
+        System.out.println("Root:");
+        index.root.traverse();
+
+        //删除 testTree/testTree1 文件夹.
+        System.out.println("testTree1 deleted.");
+        try {
+            JitRm.rm("testTree" + File.separator + "testTree1");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        //读入删除后的index文件
+        Index indexrm1 = FileReader.readCompressedObj(Index.getPath(),Index.class);
+
+        //显示暂存区文件
+        System.out.println("Valuemap:");
+        indexrm1.getValue();
+        //显示root内文件
+        System.out.println("Root:");
+        indexrm1.root.traverse();
+
+
+        //删除a.txt
+        System.out.println("a.txt deleted.");
+        try {
+            JitRm.rm("a.txt");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        //读入删除后的index文件
+        Index indexrm2 = FileReader.readCompressedObj(Index.getPath(),Index.class);
+
+        System.out.println("Valuemap:");
+        //显示暂存区文件
+        indexrm2.getValue();
+        //显示root内文件
+        System.out.println("Root:");
+        indexrm2.root.traverse();
 
     }
 }
