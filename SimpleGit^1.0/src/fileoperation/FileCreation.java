@@ -57,22 +57,7 @@ public class FileCreation {
      * @param parentTree
      * @throws IOException
      */
-    public static void recoverWorkTree(Tree t, String parentTree) throws IOException {
-        ArrayList<String> list = FileReader.readByBufferReader(t.getValue());
-        ArrayList<GitObject> treeList = t.getTreeList();
-        for(int i = 0; i < list.size(); i++){
 
-            if(FileReader.readObjectFmt(list.get(i)).equals("blob")){
-                Blob blob = Blob.deserialize(FileReader.readObjectKey(list.get(i)));
-                String fileName = FileReader.readObjectFileName(list.get(i));
-                createFile(parentTree, fileName, blob.getValue());
-            }
-            else{
-                Tree tree = Tree.deserialize(FileReader.readObjectKey(list.get(i)));
-                String dirName = FileReader.readObjectFileName(list.get(i));
-                createDirectory(parentTree, dirName);
-                recoverWorkTree(tree, parentTree + File.separator + dirName);
-            }
-        }
-    }
+
+
 }

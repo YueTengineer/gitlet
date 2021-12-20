@@ -2,9 +2,12 @@ package gitobject;
 
 import core.*;
 import fileoperation.FileReader;
+import repository.Repository;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+
 
 
 class JitTest {
@@ -12,7 +15,7 @@ class JitTest {
     public static void main(String[] args) {
         try {
             createRepository();
-            testRm();
+            testAdd();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -90,14 +93,37 @@ class JitTest {
 
     public static void testAdd(){
         try {
+            //新增
+            System.out.println("新增a.txt , testTree: ");
             JitAdd.add("a.txt");
-            Index index = FileReader.readCompressedObj(Index.getPath(),Index.class);
-            index.getValue();
-
             JitAdd.add("testTree");
             //读入index文件
-            Index index1 = FileReader.readCompressedObj(Index.getPath(),Index.class);
-            index1.getValue();
+            Index index = FileReader.readCompressedObj(Index.getPath(),Index.class);
+            showIndex(index);
+
+            /*
+            System.out.println("修改a.txt: ");
+            //修改a.txt
+            writeRandomString("a.txt");
+            JitAdd.add("a.txt");
+            //读入index文件
+            showIndex(FileReader.readCompressedObj(Index.getPath(),Index.class));
+
+            //修改testTree\\testTree1\\d.txt
+            System.out.println("修改testTree\\testTree1\\d.txt:  ");
+            writeRandomString("testTree" + File.separator + "testTree1" + File.separator + "d.txt");
+            JitAdd.add("testTree" + File.separator + "testTree1" + File.separator + "d.txt");
+            //读入index文件
+            showIndex(FileReader.readCompressedObj(Index.getPath(),Index.class));
+            */
+
+            //修改testTree\\testTree1
+            System.out.println("修改testTree\\testTree1: ");
+            writeRandomString("testTree" + File.separator + "testTree1" + File.separator + "d.txt");
+            JitAdd.add("testTree" + File.separator + "testTree1");
+            //读入index文件
+            showIndex(FileReader.readCompressedObj(Index.getPath(),Index.class));
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -137,45 +163,26 @@ class JitTest {
             //读入index文件
             Index index = FileReader.readCompressedObj(Index.getPath(),Index.class);
 
-            //显示暂存区文件
-            System.out.println("Valuemap:");
-            index.getValue();
-            System.out.print("\n");
-            //显示root内文件
-            System.out.println("Root:");
-            index.root.traverse();
+            showIndex(index);
+
+            //删除a.txt
+            System.out.println("Delete a.txt: ");
+            index.deleteFile("a.txt");
+
+            showIndex(index);
+
 
             //删除 testTree/testTree1 文件夹.
-            System.out.println("testTree1 deleted.");
+            System.out.println("Delete testTree1: ");
             index.deleteDirectory("testTree" + File.separator + "testTree1");
-            //显示暂存区文件
-            System.out.println("Valuemap:");
-            index.getValue();
-            System.out.print("\n");
-            //显示root内文件
-            System.out.println("Root:");
-            index.root.traverse();
 
+            showIndex(index);
             /*
             //删除 testTree
             System.out.println("testTree deleted.");
             index.deleteDirectory("testTree");
-            //显示暂存区文件
-            System.out.println("Valuemap:");
-            index.getValue();
-            System.out.print("\n");
-            //显示root内文件
-            System.out.println("Root:");
-            index.root.traverse();
+            showIndex(index);
             */
-
-            //删除a.txt
-            System.out.println("a.txt deleted.");
-            index.deleteFile("a.txt");
-            //显示暂存区文件
-            index.getValue();
-            //显示root内文件
-            index.root.traverse();
 
 
         } catch (Exception e) {
@@ -213,14 +220,7 @@ class JitTest {
 
         //读入index文件
         Index index = FileReader.readCompressedObj(Index.getPath(),Index.class);
-
-        //显示暂存区文件
-        System.out.println("Valuemap:");
-        index.getValue();
-        System.out.print("\n");
-        //显示root内文件
-        System.out.println("Root:");
-        index.root.traverse();
+        showIndex(index);
 
         //删除 testTree/testTree1 文件夹.
         System.out.println("testTree1 deleted.");
@@ -232,14 +232,7 @@ class JitTest {
 
         //读入删除后的index文件
         Index indexrm1 = FileReader.readCompressedObj(Index.getPath(),Index.class);
-
-        //显示暂存区文件
-        System.out.println("Valuemap:");
-        indexrm1.getValue();
-        //显示root内文件
-        System.out.println("Root:");
-        indexrm1.root.traverse();
-
+        showIndex(indexrm1);
 
         //删除a.txt
         System.out.println("a.txt deleted.");
@@ -251,13 +244,38 @@ class JitTest {
 
         //读入删除后的index文件
         Index indexrm2 = FileReader.readCompressedObj(Index.getPath(),Index.class);
+        showIndex(indexrm2);
+    }
 
-        System.out.println("Valuemap:");
+    public static void showIndex(Index in) {
         //显示暂存区文件
-        indexrm2.getValue();
-        //显示root内文件
-        System.out.println("Root:");
-        indexrm2.root.traverse();
+        System.out.println("Valuemap:");
+        in.show();
+        System.out.println("name_key_map:");
+        in.showIndexMap();
+        System.out.print("\n");
+        //显示blobMap 和 TreeMap
+        System.out.println("Root: ");
+        in.traverse();
+    }
+
+    public static void writeRandomString(String pathname) {
+        String path = Repository.getWorkTree();
+        String alphabet = "abcdefghijklmnopqrstuvwxyz";
+        String number = "0123456789";
+        int cnt = (int)(40 * Math.random()) + 10;
+        StringBuffer bf = new StringBuffer();
+        for (int i = 0; i < cnt; i ++) {
+            int alphabetid = (int) (alphabet.length() * Math.random());
+            bf.append(alphabet.charAt(alphabetid));
+            if (alphabetid <= 9) bf.append(number.charAt(alphabetid));
+        }
+        try (PrintWriter out = new PrintWriter(path + File.separator + pathname)) {
+            out.println(bf.toString());
+        } catch(Exception ex) {
+            ex.printStackTrace();
+        }
 
     }
+
 }

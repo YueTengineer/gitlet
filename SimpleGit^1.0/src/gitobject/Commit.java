@@ -83,15 +83,7 @@ public class Commit extends GitObject{
         this.value = "tree " + this.tree + "\nparent " + this.parent+ "\nauthor " + this.author + "\ncommitter " + this.committer + "\n" + this.message;
         key = genKey();
     }
-    
-    /**
-     * Deserialize the commit object from its key(commitId)
-     * @param commitId
-     * @throws IOException
-     */
-    public Commit(String commitId) throws IOException {
 
-    }
     /**
      * Generate the hash value of this commit.
      * @return key

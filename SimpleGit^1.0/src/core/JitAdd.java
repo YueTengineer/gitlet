@@ -19,17 +19,17 @@ public class JitAdd {
 
         else {
             //读入index文件
-            Index index = FileReader.readCompressedObj(Index.getPath(),Index.class);
+            Index index = FileReader.readCompressedObj(Index.getPath(), Index.class);
             if (f.isFile()) {
                 try {
-                    Blob b = new Blob(f);
+                    Blob b = new Blob(f, filename);
                     index.add(b);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
             else if (f.isDirectory()) {
-                Tree t = new Tree(f);
+                Tree t = new Tree(f, filename);
                 index.add(t);
             }
             //覆盖原有文件

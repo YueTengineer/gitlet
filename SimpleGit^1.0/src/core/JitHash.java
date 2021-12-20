@@ -26,7 +26,7 @@ public class JitHash {
 
         if(file.isFile()){
             try{
-                Blob blob = new Blob(file);
+                Blob blob = new Blob(file, filename);
                 blob.compressWrite();
             }catch(Exception e){
                 e.printStackTrace();
@@ -34,7 +34,7 @@ public class JitHash {
         }
         if(file.isDirectory()){
             try {
-                Tree tree = new Tree(file);
+                Tree tree = new Tree(file, filename);
                 tree.compressWrite();
             } catch (Exception e) {
                 e.printStackTrace();

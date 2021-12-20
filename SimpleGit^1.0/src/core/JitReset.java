@@ -3,16 +3,18 @@ commitId指的是key值。
 */
 
 package core;
-import fileoperation.*;
+import fileoperation.FileDeletion;
+import fileoperation.FileReader;
 import gitobject.*;
+import repository.Repository;
 import java.io.*;
-import java.util.*;
+
 
 public class JitReset{
     public static void reset(String mode,String commitID) throws IOException{
         if(FileReader.objectExists(commitID)){
             //根据commitID生成一个commit类
-            Commit com=new Commit(commitID);
+            Commit com = Commit.deserialize(commitID);
             //读取index文件中对象
             Index index = FileReader.readCompressedObj(Index.getPath(),Index.class);
 
@@ -45,7 +47,7 @@ public class JitReset{
                     index2.compressWrite();
                     //清空工作区所有文件，把commitID中的内容还原出来。
                     FileDeletion.deleteFile(Repository.getGitDir());
-                    com.deserialize();
+                    //com.deserialize();
                 }catch(Exception e){
                     e.printStackTrace();
                 }

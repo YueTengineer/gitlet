@@ -13,6 +13,7 @@ public class Blob extends GitObject{
      * @param file
      * @throws Exception
      */
+    // 只当为workTree下使用
     public Blob(File file) throws Exception {
         fmt = "blob";
         mode = "100644";

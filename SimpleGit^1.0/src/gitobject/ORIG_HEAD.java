@@ -1,6 +1,10 @@
 package gitobject;
+import fileoperation.FileWriter;
 import repository.Repository;
-public class ORIG_HEAD implements Serializable{
+import java.io.File;
+import java.io.Serializable;
+
+public class ORIG_HEAD implements Serializable {
     static String path = Repository.getGitDir() + File.separator + "ORIG_HEAD";
     private String cur_commit = null;
 

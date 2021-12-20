@@ -11,22 +11,21 @@ import java.util.*;
 
 public class Tree extends GitObject{
 
-    protected ArrayList<GitObject> treeList;	//GitObjects in tree
+    protected HashMap<String, String> blobMap = new HashMap<>();          // 对应的blob key值
+    protected HashMap<String,Tree> treeMap = new HashMap<>();     // tree下对应的tree <key, Tree>
 
-
-    public ArrayList<GitObject> getTreeList(){
-        return treeList;
+    public HashMap<String, String> getBlobMap() {
+        return blobMap;
     }
 
-    private static ArrayList<GitObject> constructTree(File dir) {
-        return constructTree(dir, dir.getName());
+    public HashMap<String, Tree> getTreeMap() {
+        return treeMap;
     }
 
     // workTree下文件对应的Blob名称 01.txt
     // workTree下文件夹内对应的Blob名称 test/01.txt ; test/test1/01.txt
 
-    private static ArrayList<GitObject> constructTree(File dir, String name) {
-        ArrayList<GitObject> ls = new ArrayList<>();
+    private void constructTree(File dir, String name) {
         List<File> files = sortFile(dir.listFiles());
 
         for(File f : files) {
@@ -34,28 +33,34 @@ public class Tree extends GitObject{
 
             if (f.isFile()) {
                 try {
+                    // 创建Blob 将对应的对象写入objects
                     Blob b = new Blob(f, newname);
-                    ls.add(b);
+                    b.compressWrite();
+                    blobMap.put(b.getKey(), newname);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
             else {
                 try {
-                    Tree t = new Tree(f, constructTree(f, newname), newname);
-                    ls.add(t);
+                    Tree t = new Tree(f, newname);
+                    treeMap.put(t.getKey(), t);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         }
-        return ls;
     }
 
     public Tree(){
         this.fmt = "tree";
         this.mode = "040000";
-        this.treeList = new ArrayList<>();
+    }
+
+    public Tree(String name){
+        this.fmt = "tree";
+        this.mode = "040000";
+        this.name = name;
     }
     
     /**
@@ -66,22 +71,22 @@ public class Tree extends GitObject{
     public Tree(File dir) throws Exception {
 
         if (dir.isFile()) throw new IllegalArgumentException("Must be a directory.");
-        this.treeList = constructTree(dir);
         this.fmt = "tree";
         this.mode = "040000";
         this.name = dir.getName();
+        constructTree(dir, name);
         this.value = genValue();
         this.key = genKey();
     }
 
     //主要用于建树时Tree命名以及treelist赋值.
-    public Tree(File dir, ArrayList ls, String name) throws Exception {
+    public Tree(File dir, String name) throws Exception {
 
         if (dir.isFile()) throw new IllegalArgumentException("Must be a directory.");
-        this.treeList = ls;
         this.fmt = "tree";
         this.mode = "040000";
         this.name = name;
+        constructTree(dir, name);
         this.value = genValue();
         this.key = genKey();
     }
@@ -127,11 +132,13 @@ public class Tree extends GitObject{
         return fileList;
     }
 
-    public String genValue() throws IOException {
+    public String genValue()  {
         StringBuffer bf = new StringBuffer();
-
-        for (GitObject go : treeList) {
-            bf.append(go.toString() + " "  + go.getName() + "\n");
+        for (String key : blobMap.keySet()) {
+            bf.append("100644 blob " + key + " " + blobMap.get(key) + "\n");
+        }
+        for (Tree t : treeMap.values()) {
+            bf.append(t.toString() + " "  + t.getName() + "\n");
         }
         return bf.toString();
     }
@@ -147,18 +154,78 @@ public class Tree extends GitObject{
         return SHA1.getHash("040000 tree " + value);
     }
 
-    public void add(GitObject go) {
-        this.treeList.add(go);
+
+    protected boolean addBlobWithSameName(String target_key, String new_key, String new_name) {
+        if (blobMap.containsKey(target_key)) {
+            blobMap.remove(target_key);
+            blobMap.put(new_key, new_name);
+            update();
+            return true;
+        }
+        else{
+            for (Tree t :treeMap.values()) {
+                if (t.addBlobWithSameName(target_key, new_key, new_name)){
+                    update();
+                    return true;
+                }
+            }
+        }
+        throw new IllegalArgumentException("No file with such name is found.");
     }
 
-    public void delete (String name) {
-        int size = treeList.size();
-        for (int i = 0; i < size; i ++) {
-            GitObject go = treeList.get(i);
-            if (go.getName().equals(name)) {
-                treeList.remove(i);
-                return;
+    protected boolean addTreeWithSameName(String target_key, String new_key, Tree new_tree) {
+        if (treeMap.containsKey(target_key)) {
+            treeMap.remove(target_key);
+            treeMap.put(new_key, new_tree);
+            update();
+            return true;
+        }
+        else{
+            for (Tree t :treeMap.values()) {
+                if (t.addTreeWithSameName(target_key, new_key, new_tree)){
+                    update();
+                    return true;
+                }
             }
+        }
+        throw new IllegalArgumentException("No directory with such name is found.");
+    }
+
+    // 在树中找到并删除Blob key值对应的的gitobject，并更新相应的值.
+    // 找到了返回 true 否则 返回 false;
+    public boolean deleteBlob (String key) {
+        if (blobMap.containsKey(key)) {
+            blobMap.remove(key);
+            update();
+            return true;
+        }
+        else {
+            for (Tree t : treeMap.values()) {
+                if (t.deleteBlob(key)) {
+                    update();
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    // 在树中找到并删除Tree key值对应的的gitobject，并更新相应的值.
+    // 找到了返回 true 否则 返回 false;
+    public boolean deleteTree (String key) {
+        if (treeMap.containsKey(key)) {
+            treeMap.remove(key);
+            update();
+            return true;
+        }
+        else {
+            for (Tree t : treeMap.values()) {
+                if (t.deleteTree(key)) {
+                    update();
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
@@ -179,12 +246,8 @@ public class Tree extends GitObject{
 
     private void traverse(Tree root) {
         System.out.println(root.getValue());
-        for (GitObject go : root.getTreeList()) {
-            String fmt = go.getFmt();
-            if (fmt.equals("tree")) {
-                Tree t = (Tree) go;
-                traverse(t);
-            }
+        for (Tree t : root.getTreeMap().values()) {
+            traverse(t);
         }
     }
 

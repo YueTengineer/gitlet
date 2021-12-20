@@ -20,7 +20,7 @@ public class GitObject implements Serializable {
     public String getFmt(){ return fmt; }
     public String getKey() { return key; }
     public String getMode(){ return mode; }
-    public String getPath() { return path; }
+    public static String getPath() { return path; }
     public String getValue(){ return value; }
     public String getName() { return name; }
 
