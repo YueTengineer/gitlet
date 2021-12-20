@@ -7,9 +7,7 @@ import repository.Repository;
 import java.io.File;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.*;
 
 public class Index extends Tree implements Serializable {
     static String path = Repository.getGitDir() + File.separator + "index";   //absolute path of index.
@@ -24,6 +22,11 @@ public class Index extends Tree implements Serializable {
     public static String getPath() {
         return path;
     }
+
+    public HashMap<String, String> getName_key_map() {
+        return name_key_map;
+    }
+
     //加入某个GitObject,新增或修改
     public void add(GitObject go) throws Exception{
         String fmt = go.getFmt();
@@ -41,17 +44,11 @@ public class Index extends Tree implements Serializable {
             if (name_key_map.containsKey(name)) {
                 go.compressWrite();
                 String target_key = name_key_map.get(name);
-                addBlobWithSameName(target_key, key, name);
+                addBlobWithSameName(target_key, key, name, name_key_map);
                 updateMap(go, date);
-                //如果Blob在某个Tree下，对name_key_map进行更新.
-                String[] parentlist =  name.replace("\\","/").split("/");
-                if (parentlist.length > 1) {
-                    updateMap(parentlist);
-                }
             }
             // 对应文件不存在,判断父文件夹的位置，以及是否已经在index树中，如果没有，则创立新树
             else {
-
                 String [] parentList = name.replace("\\","/").split("/");
                 if (parentList.length <= 1) {
                     go.compressWrite();
@@ -59,8 +56,28 @@ public class Index extends Tree implements Serializable {
                     updateMap(go, date);
                 }
                 else {
-                    Tree root = createTree(parentList, go);
-                    updateMap(root, date);
+
+                    List <String []> res = splitParentList(parentList);
+                    String[] existedParent = res.get(0);
+                    String[] newParent = res.get(1);
+
+                    if(existedParent.length == 0) {
+                        Tree root = createRecursiveNewTree(parentList,1, parentList[0], go);
+                        treeMap.put(root.getKey(), root);
+                        updateMap(root, date);
+                    }
+                    else if (newParent.length == 1){
+                        String parent_key = getParentKey(existedParent);
+                        addNewBlob(parent_key, key, name, name_key_map);
+                        updateMap(go, date);
+                    }
+                    else {
+                        String parent_key = getParentKey(existedParent);
+                        Tree recur_new_tree = createRecursiveNewTree(newParent, 1, newParent[0], go);
+                        addNewTree(parent_key, recur_new_tree.getKey(), recur_new_tree, name_key_map);
+                        updateMap(go, date);
+                    }
+
                 }
                 //更新index的 value 和key值
                 update();
@@ -70,7 +87,7 @@ public class Index extends Tree implements Serializable {
             //对应文件夹已经存在，找到该tree含有的不同文件，写入objects/, 替换相应的treeMap位置,更新上层的树.
             if (name_key_map.containsKey(name)) {
                 String target_key = name_key_map.get(name);
-                addTreeWithSameName(target_key, key, (Tree) go);
+                addTreeWithSameName(target_key, key, (Tree) go, name_key_map);
                 updateMap(go, date);
             }
 
@@ -82,8 +99,28 @@ public class Index extends Tree implements Serializable {
                     updateMap(go, date);
                 }
                 else {
-                    Tree root = createTree(parentList, go);
-                    updateMap(root, date);
+
+                    List <String []> res = splitParentList(parentList);
+                    String[] existedParent = res.get(0);
+                    String[] newParent = res.get(1);
+
+                    if(existedParent.length == 0) {
+                        Tree root = createRecursiveNewTree(parentList,1, parentList[0], go);
+                        treeMap.put(root.getKey(), root);
+                        updateMap(root, date);
+                    }
+                    else if (newParent.length == 1){
+                        String parent_key = getParentKey(existedParent);
+                        addNewTree(parent_key, key, (Tree) go, name_key_map);
+                        updateMap(go, date);
+                    }
+
+                    else {
+                        String parent_key = getParentKey(existedParent);
+                        Tree recur_new_tree = createRecursiveNewTree(newParent, 1, newParent[0], go);
+                        addNewTree(parent_key, recur_new_tree.getKey(), recur_new_tree, name_key_map);
+                        updateMap(go, date);
+                    }
                 }
                 //更新index的 value 和key值
                 update();
@@ -91,13 +128,45 @@ public class Index extends Tree implements Serializable {
         }
     }
 
-    private Tree createTree(String[] nameList, GitObject go) throws Exception {
+    private List<String[]> splitParentList(String[] parentList) {
+        int i;
+        String compared_name = "";
+        for (i = 0; i < parentList.length; i ++) {
+            if (i == 0) compared_name = parentList[i];
+            else compared_name += File.separator + parentList[i];
+            if (!name_key_map.containsKey(compared_name)) {
+                break;
+            }
+        }
+        String [] existedParent = new String[i];
+        String [] newParent = new String[parentList.length - i];
+        for (int a = 0; a < existedParent.length; a ++) {
+            existedParent[a] = parentList[a];
+        }
+        for (int b = 0; b < newParent.length; b++) {
+            newParent[b] = parentList[b + i];
+        }
+        List<String []> res = new ArrayList<>();
+        res.add(existedParent);
+        res.add(newParent);
 
-        return createRecursiveTree(nameList, 1, nameList[0], go);
+        return res;
     }
 
-    private Tree createRecursiveTree(String[] nameList, int level, String name, GitObject go) throws Exception {
+    private String getParentKey(String [] existedlist) {
+        StringBuffer bf = new StringBuffer();
+        for (int i = 0; i < existedlist.length; i ++) {
+            if (i == existedlist.length - 1) {
+                bf.append(existedlist[i]);
+                break;
+            }
+            bf.append(existedlist[i] + File.separator);
+        }
+        String res = name_key_map.get(bf.toString());
+        return res;
+    }
 
+    private Tree createRecursiveNewTree(String[] nameList, int level, String name, GitObject go) throws Exception {
         Tree root = new Tree(name);
 
         if (level == nameList.length - 1) {
@@ -105,7 +174,7 @@ public class Index extends Tree implements Serializable {
             String n = go.getName();
             String key = go.getKey();
             if (fmt.equals("blob")) {
-                root.getBlobMap().put(n, key);
+                root.getBlobMap().put(key, n);
                 go.compressWrite();
             }
             else {
@@ -116,13 +185,12 @@ public class Index extends Tree implements Serializable {
         }
 
         String nextTreeName = name + File.separator + nameList[level];
-        root.getTreeMap().put(nextTreeName, createRecursiveTree(nameList, level + 1, nextTreeName, go));
+        root.getTreeMap().put(nextTreeName, createRecursiveNewTree(nameList, level + 1, nextTreeName, go));
         root.update();
         return root;
     }
 
-
-    // add后更新name_key_map 以及 valuemap
+    // add后依据传入的GitObject更新对应的 name_key_map 以及 valuemap
     private void updateMap(GitObject go, String date) throws Exception {
         String fmt = go.getFmt();
         String mode = go.getMode();
@@ -145,25 +213,6 @@ public class Index extends Tree implements Serializable {
             }
             for (Tree tree : t.getTreeMap().values()) {
                 updateMap(tree, date);
-            }
-        }
-    }
-
-    //更新某个目录下的Blob后，对其上层所有的树name_key_map 全部更新.
-    private void updateMap(String[] parentlist) {
-        updateMap(parentlist, parentlist[0], 0, this);
-    }
-
-    private void updateMap(String[] parentlist, String target_name, int index, Tree t) {
-
-        for (Tree tree : t.getTreeMap().values()) {
-            String tree_key = tree.getKey();
-            String tree_name = tree.getName();
-            if(tree_name.equals(target_name)) {
-                name_key_map.put(tree_name, tree_key);
-                if (index == parentlist.length - 2) return;
-                String next_target_name = target_name + File.separator + parentlist[index + 1];
-                updateMap(parentlist, next_target_name,index + 1, tree);
             }
         }
     }
@@ -191,6 +240,10 @@ public class Index extends Tree implements Serializable {
     @Override
     public void compressWrite() {
         FileWriter.writeCompressedObj(path, this);
+    }
+
+    public void compressWriteAsTree() throws Exception {
+        super.compressWrite();
     }
 
     // 展示暂存区(valuemap)现存的文件

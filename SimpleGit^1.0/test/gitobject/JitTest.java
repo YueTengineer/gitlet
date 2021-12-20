@@ -8,15 +8,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-
-
 class JitTest {
 
     public static void main(String[] args) {
         try {
             createRepository();
-            testAdd();
-
+            testLog();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -94,14 +91,26 @@ class JitTest {
     public static void testAdd(){
         try {
             //新增
-            System.out.println("新增a.txt , testTree: ");
+            System.out.println("新增a.txt");
             JitAdd.add("a.txt");
-            JitAdd.add("testTree");
             //读入index文件
             Index index = FileReader.readCompressedObj(Index.getPath(),Index.class);
             showIndex(index);
 
+            //新增testTree\\a.txt
+            System.out.println("新增testTree\\a.txt: ");
+            JitAdd.add("testTree\\a.txt");
+            //读入index文件
+            showIndex(FileReader.readCompressedObj(Index.getPath(),Index.class));
+
+            //新增testTree\\testTree1
+            System.out.println("新增testTree\\testTree1: ");
+            JitAdd.add("testTree\\testTree1");
+            //读入index文件
+            showIndex(FileReader.readCompressedObj(Index.getPath(),Index.class));
+
             /*
+
             System.out.println("修改a.txt: ");
             //修改a.txt
             writeRandomString("a.txt");
@@ -109,20 +118,21 @@ class JitTest {
             //读入index文件
             showIndex(FileReader.readCompressedObj(Index.getPath(),Index.class));
 
-            //修改testTree\\testTree1\\d.txt
-            System.out.println("修改testTree\\testTree1\\d.txt:  ");
-            writeRandomString("testTree" + File.separator + "testTree1" + File.separator + "d.txt");
-            JitAdd.add("testTree" + File.separator + "testTree1" + File.separator + "d.txt");
-            //读入index文件
-            showIndex(FileReader.readCompressedObj(Index.getPath(),Index.class));
-            */
-
             //修改testTree\\testTree1
             System.out.println("修改testTree\\testTree1: ");
             writeRandomString("testTree" + File.separator + "testTree1" + File.separator + "d.txt");
             JitAdd.add("testTree" + File.separator + "testTree1");
             //读入index文件
             showIndex(FileReader.readCompressedObj(Index.getPath(),Index.class));
+
+
+            //修改testTree\\testTree1\\d.txt
+            System.out.println("修改testTree\\testTree1\\d.txt:  ");
+            writeRandomString("testTree" + File.separator + "testTree1" + File.separator + "d.txt");
+            JitAdd.add("testTree" + File.separator + "testTree1" + File.separator + "d.txt");
+            //读入index文件
+            showIndex(FileReader.readCompressedObj(Index.getPath(),Index.class));
+             */
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -246,6 +256,24 @@ class JitTest {
         Index indexrm2 = FileReader.readCompressedObj(Index.getPath(),Index.class);
         showIndex(indexrm2);
     }
+
+    public static void testLog() {
+        try {
+            JitAdd.add("a.txt");
+            JitCommit.commit("Yue","Yue","initial commit.");
+            JitAdd.add("testTree\\a.txt");
+            JitCommit.commit("Yue","Yue","testTree\\a.txt commit.");
+            JitAdd.add("testTree\\testTree1");
+            JitCommit.commit("Yue","Yue","testTree\\testTree1 commit.");
+            JitAdd.add("testTree");
+            JitCommit.commit("Yue","Yue","testTree completed.");
+            JitLog.log();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
 
     public static void showIndex(Index in) {
         //显示暂存区文件

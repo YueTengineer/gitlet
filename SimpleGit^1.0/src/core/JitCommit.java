@@ -11,7 +11,7 @@ public class JitCommit {
         try {
             Commit com = new Commit(index, author, committer, message);
             // 将暂存区生成的树、commit类、暂存区内包含的所有的树全部存入objects文件夹中
-            index.compressWrite();
+            index.compressWriteAsTree();
             com.compressWrite();
             System.out.println("Commit key 为：" +com.getKey());
             writeTree(index);

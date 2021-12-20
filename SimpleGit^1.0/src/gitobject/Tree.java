@@ -155,7 +155,7 @@ public class Tree extends GitObject{
     }
 
 
-    protected boolean addBlobWithSameName(String target_key, String new_key, String new_name) {
+    protected boolean addBlobWithSameName(String target_key, String new_key, String new_name, HashMap nkmap) {
         if (blobMap.containsKey(target_key)) {
             blobMap.remove(target_key);
             blobMap.put(new_key, new_name);
@@ -164,8 +164,9 @@ public class Tree extends GitObject{
         }
         else{
             for (Tree t :treeMap.values()) {
-                if (t.addBlobWithSameName(target_key, new_key, new_name)){
+                if (t.addBlobWithSameName(target_key, new_key, new_name, nkmap)){
                     update();
+                    nkmap.put(t.getName(),t.getKey());
                     return true;
                 }
             }
@@ -173,7 +174,7 @@ public class Tree extends GitObject{
         throw new IllegalArgumentException("No file with such name is found.");
     }
 
-    protected boolean addTreeWithSameName(String target_key, String new_key, Tree new_tree) {
+    protected boolean addTreeWithSameName(String target_key, String new_key, Tree new_tree, HashMap nkmap) {
         if (treeMap.containsKey(target_key)) {
             treeMap.remove(target_key);
             treeMap.put(new_key, new_tree);
@@ -182,13 +183,60 @@ public class Tree extends GitObject{
         }
         else{
             for (Tree t :treeMap.values()) {
-                if (t.addTreeWithSameName(target_key, new_key, new_tree)){
+                if (t.addTreeWithSameName(target_key, new_key, new_tree, nkmap)){
                     update();
+                    nkmap.put(t.getName(),t.getKey());
                     return true;
                 }
             }
         }
         throw new IllegalArgumentException("No directory with such name is found.");
+    }
+
+    protected boolean addNewBlob(String parent_key, String new_key, String new_name, HashMap nkmap) {
+        if (treeMap.containsKey(parent_key)) {
+            Tree parent = treeMap.get(parent_key);
+            parent.getBlobMap().put(new_key, new_name);
+            parent.update();
+            treeMap.remove(parent_key);
+            treeMap.put(parent.getKey(), parent);
+            update();
+            nkmap.put(parent.getName(), parent.getKey());
+            return true;
+        }
+        else{
+            for (Tree t :treeMap.values()) {
+                if (t.addNewBlob(parent_key, new_key, new_name, nkmap)){
+                    update();
+                    nkmap.put(t.getName(),t.getKey());
+                    return true;
+                }
+            }
+        }
+        throw new IllegalArgumentException("No file with such parent name is found.");
+    }
+
+    protected boolean addNewTree(String parent_key, String new_key, Tree new_tree, HashMap nkmap) {
+        if (treeMap.containsKey(parent_key)) {
+            Tree parent = treeMap.get(parent_key);
+            parent.getTreeMap().put(new_key, new_tree);
+            parent.update();
+            treeMap.remove(parent_key);
+            treeMap.put(parent.getKey(), parent);
+            update();
+            nkmap.put(parent.getName(), parent.getKey());
+            return true;
+        }
+        else{
+            for (Tree t :treeMap.values()) {
+                if (t.addNewTree(parent_key, new_key, new_tree, nkmap)){
+                    update();
+                    nkmap.put(t.getName(),t.getKey());
+                    return true;
+                }
+            }
+        }
+        throw new IllegalArgumentException("No file with such parent name is found.");
     }
 
     // 在树中找到并删除Blob key值对应的的gitobject，并更新相应的值.

@@ -10,9 +10,11 @@ public class JitLog {
         Head head = FileReader.readCompressedObj(Head.getPath() ,Head.class);
         Commit com = Commit.deserialize(head.getCurrentCommit());
         System.out.println(com.getValue());
-        while (com.getParent() != null) {
+        System.out.println();
+        while (com.getParent().length() != 0) {
             com = Commit.deserialize(com.getParent());
             System.out.println(com.getValue());
+            System.out.println();
         }
     }
 }
