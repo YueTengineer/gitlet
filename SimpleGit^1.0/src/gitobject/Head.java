@@ -1,22 +1,31 @@
 package gitobject;
+
+import fileoperation.FileReader;
 import fileoperation.FileWriter;
 import repository.Repository;
 
 import java.io.File;
+
 import java.io.Serializable;
 
 public class Head implements Serializable {
     static String path = Repository.getGitDir() + File.separator + "HEAD";   //absolute path of HEAD.
-    private String cur_commit = null;
+    private String targetName = "master";
 
     public Head() {}
 
-    public Head(Commit go) {
-        this.cur_commit = go.getKey();
+    public void updateTarget(Branch new_target) {
+        this.targetName = new_target.getBranchName();
     }
 
-    public String getCurrentCommit() {
-        return cur_commit;
+    public static String getCurrentCommit()  {
+        Branch curbranch = Branch.getCurBranch();
+        return curbranch.getCommitId();
+
+    }
+
+    public String getTargetName() {
+        return targetName;
     }
 
     public void compressWrite() {
@@ -26,5 +35,10 @@ public class Head implements Serializable {
     public static String getPath() {
         return path;
     }
+
+    public static Head deserialize() {
+        return FileReader.readCompressedObj(path, Head.class);
+    }
+
 
 }

@@ -10,8 +10,8 @@ public class ORIG_HEAD implements Serializable {
 
     public ORIG_HEAD() {}
 
-    public ORIG_HEAD(Commit go) {
-        this.cur_commit = go.getKey();
+    public ORIG_HEAD(String key) {
+        this.cur_commit = key;
     }
 
     public String getCurrentCommit() {

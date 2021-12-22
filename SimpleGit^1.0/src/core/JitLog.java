@@ -7,7 +7,7 @@ import gitobject.Head;
 public class JitLog {
 
     public static void log() {
-        Head head = FileReader.readCompressedObj(Head.getPath() ,Head.class);
+        Head head = Head.deserialize();
         Commit com = Commit.deserialize(head.getCurrentCommit());
         System.out.println(com.getValue());
         System.out.println();

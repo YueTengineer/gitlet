@@ -13,7 +13,7 @@ class JitTest {
     public static void main(String[] args) {
         try {
             createRepository();
-            testLog();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -271,6 +271,10 @@ class JitTest {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+    }
+
+    public static void testBranch() {
 
     }
 

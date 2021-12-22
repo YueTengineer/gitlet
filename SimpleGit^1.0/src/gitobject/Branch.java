@@ -3,10 +3,15 @@ import repository.Repository;
 import gitobject.*;
 import fileoperation.*;
 
-public class Branch{
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+
+public class Branch implements Serializable {
     //默认master
     protected String branchName = "master"; 	
     protected String commitId;
+    static String path = Repository.getGitDir() + File.separator + "refs" + File.separator + "heads";
 
     public String getBranchName(){
         return branchName;
@@ -14,34 +19,41 @@ public class Branch{
     public String getCommitId(){
         return commitId;
     }
+    public String getPath() {
+        return path;
+    }
+
+    public Branch() {}
 
     public Branch(String branchName, String commitId){
         this.branchName = branchName;
         this.commitId = commitId;
+        FileWriter.writeCompressedObj(path + branchName, this);
     }
 
-    public Branch(String branchName) throws IOException {
-        static String path = Repository.getGitDir() + File.separator + "refs" + File.separator + "heads"+File.separator+branchName;
-        this.branchName = branchName;
-        FileWriter.writeCompressedObj(path, this);
-        commitId=this.getKey();
-
+    public static Branch deserialize(String branchName) throws IOException {
+        String filepath = path + File.separator + branchName;
+        return FileReader.readCompressedObj(filepath, Branch.class);
     }
+
     public void updateBranch(String commitId){
         this.commitId = commitId;
     }
-    public void writeHead() throws IOException {
-        Head head = FileReader.readCompressedObj(Head.getPath() ,Head.class);
-        head.compressWrite();
+
+    public void writeBranch()  {
+        FileWriter.writeCompressedObj(path + File.separator + branchName, this);
     }
-    public void writeBranch() throws IOException {
-        String path = Repository.getGitDir() + File.separator + "refs" + File.separator + "heads"+File.separator+branchName;
-        FileWriter.writeCompressedObj(path, this);
-    }
-    public static Branch getCurBranch() throws IOException{
+
+    public static Branch getCurBranch() {
         Head head = FileReader.readCompressedObj(Head.getPath() ,Head.class);
-        String branchName=head.getCurrentCommit();
-        Branch branch = new Branch(branchName);
+        //获取当前head所指的branchName
+        String branchName = head.getTargetName();
+        Branch branch = null;
+        try {
+            branch = Branch.deserialize(branchName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return branch;
     }
     

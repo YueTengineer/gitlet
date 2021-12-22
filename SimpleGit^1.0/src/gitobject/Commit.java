@@ -115,5 +115,10 @@ public class Commit extends GitObject{
 
         return null;
     }
+
+    public Index getIndexTree() {
+        Index res = (Index)Tree.deserialize(tree);
+        return res;
+    }
 }
 

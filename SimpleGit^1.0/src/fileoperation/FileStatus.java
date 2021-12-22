@@ -18,7 +18,7 @@ public class FileStatus {
         File branch = new File(Repository.getGitDir() + File.separator + "refs"
                 + File.separator + "heads" + File.separator + branchname);
 
-        return branch.isFile();
+        return branch.exists();
     }
 
     /**

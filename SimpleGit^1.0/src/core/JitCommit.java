@@ -15,10 +15,10 @@ public class JitCommit {
             com.compressWrite();
             System.out.println("Commit key 为：" +com.getKey());
             writeTree(index);
-            //将HEAD指针指向当前Commit，覆盖原有指针.
-            Head head = new Head(com);
-            head.compressWrite();
-
+            //读出HEAD当前所指向的Branch， 将branch向后一步, 最后覆写.
+            Branch curbranch = Branch.getCurBranch();
+            curbranch.updateBranch(com.getKey());
+            curbranch.writeBranch();
         } catch (Exception e) {
             e.printStackTrace();
         }

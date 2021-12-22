@@ -3,6 +3,7 @@ package repository;
 import java.io.File;
 import java.io.IOException;
 import fileoperation.FileCreation;
+import gitobject.Branch;
 import gitobject.Head;
 import gitobject.Index;
 
@@ -78,6 +79,9 @@ public class Repository {
         //初始化并将index文件写入.jit/ 文件夹
         Index index = new Index();
         index.compressWrite();
+        //初始化master branch.
+        Branch master = new Branch();
+        master.writeBranch();
     }
 
 }
