@@ -27,6 +27,8 @@ public class FileDeletion {
     public static void deleteFile(String path){
         deleteFile(new File(path));
     }
+
+
     
     /**
      * Delete the content of a file.

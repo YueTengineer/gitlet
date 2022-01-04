@@ -1,10 +1,7 @@
 package core;
 
 import fileoperation.FileReader;
-import gitobject.Blob;
-import gitobject.GitObject;
-import gitobject.Index;
-import gitobject.Tree;
+import gitobject.*;
 import repository.Repository;
 
 import java.io.File;
@@ -20,6 +17,7 @@ public class JitAdd {
         else {
             //读入index文件
             Index index = FileReader.readCompressedObj(Index.getPath(), Index.class);
+
             if (f.isFile()) {
                 try {
                     Blob b = new Blob(f, filename);

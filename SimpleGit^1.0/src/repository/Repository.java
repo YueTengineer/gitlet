@@ -2,15 +2,20 @@ package repository;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
+import java.util.HashSet;
+
 import fileoperation.FileCreation;
+import fileoperation.FileReader;
+import fileoperation.FileWriter;
 import gitobject.Branch;
 import gitobject.Head;
 import gitobject.Index;
+import gitobject.Status;
 
-public class Repository {
-    private static String workTree;	//working directory
-    private static String gitDir;	//jit repository path
-
+public class Repository implements Serializable {
+    private String workTree;	//working directory
+    private String gitDir;	//jit repository path
     /**
      * Constructor
      */
@@ -19,7 +24,7 @@ public class Repository {
             throw new IOException("The repository does not exist!");
         }
     }
-    
+
     /**
      * Construct a new repository instance with certain path.
      * Constructor
@@ -32,13 +37,15 @@ public class Repository {
     }
 
     public static String getGitDir() {
-        return gitDir;
+        Repository repo = FileReader.readCompressedObj("C:" + File.separator + "jitRepoAddress" + File.separator + "Repo",Repository.class);
+        return repo.gitDir;
     }
 
     public static String getWorkTree() {
-        return workTree;
+        Repository repo = FileReader.readCompressedObj("C:" + File.separator + "jitRepoAddress" + File.separator + "Repo",Repository.class);
+        return repo.workTree;
     }
-    
+
     /**
      * Helper functions.
      * @return
@@ -56,11 +63,15 @@ public class Repository {
      * @throws IOException
      */
     public void createRepo() throws IOException {
+        // 在固定位置保存仓库记录.
+        storeAddress();
+
         File file = new File(gitDir);
 
         if(!file.exists()){
             file.mkdirs();
         }
+
         //创建名为logs的空文件夹，存储不同分支下commit记录
         FileCreation.createDirectory(gitDir, "logs");
         //创建名为objects的空文件夹，保存blob,tree,commit对象hash文件
@@ -82,6 +93,17 @@ public class Repository {
         //初始化master branch.
         Branch master = new Branch();
         master.writeBranch();
+        //初始化Status.
+        Status status = new Status();
+        status.writeStatus();
+
     }
+
+    private void storeAddress() {
+        File storage = new File("C:" + File.separator + "jitRepoAddress");
+        storage.mkdirs();
+        FileWriter.writeCompressedObj(storage.getAbsolutePath() + File.separator + "Repo",this);
+    }
+
 
 }

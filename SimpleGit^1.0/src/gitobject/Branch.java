@@ -32,6 +32,9 @@ public class Branch implements Serializable {
     }
 
     public static Branch deserialize(String branchName) throws IOException {
+        if (!FileStatus.branchExist(branchName)) {
+            System.out.println("Branch " + branchName + " not found.");
+        }
         String filepath = path + File.separator + branchName;
         return FileReader.readCompressedObj(filepath, Branch.class);
     }

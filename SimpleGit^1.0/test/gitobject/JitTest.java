@@ -12,7 +12,35 @@ class JitTest {
 
     public static void main(String[] args) {
         try {
+            JitInit.init("C:\\软件\\testjit\\SimpleGit-main\\test");
+            JitAdd.add("a.txt");
+            JitCommit.commit("Yue","Yue","a.txt");
+            JitAdd.add("testTree");
+            JitCommit.commit("Yue","Yue","testTree");
+
+
+            /*
             createRepository();
+            JitAdd.add("a.txt");
+            JitCommit.commit("Yue","Yue","a.txt");
+            JitBranch.createbranch("test");
+            JitAdd.add("testTree");
+            JitCommit.commit("Yue","Yue","testTree");
+            JitLs.lsfiles();
+
+            JitCheckout.checkout("test");
+            JitAdd.add("b.txt");
+            JitCommit.commit("Yue","Yue","b.txt");
+
+            JitDiff.diffBranch("master", "test");
+
+            JitReset.resetOneStep("hard");
+
+            writeRandomString("a.txt");
+            JitAdd.add("a.txt");
+
+            JitDiff.diffCached();
+*/
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -275,6 +303,20 @@ class JitTest {
     }
 
     public static void testBranch() {
+
+    }
+    public static void testDiff() throws Exception {
+        JitAdd.add("a.txt");
+        JitCommit.commit("Yue","Yue","initial commit.");
+        JitAdd.add("testTree");
+        JitDiff.diffCached();
+        JitCommit.commit("Yue","Yue","second commit.");
+        JitBranch.createbranch("test");
+        JitCheckout.checkout("test");
+        writeRandomString("a.txt");
+        JitAdd.add("a.txt");
+        JitCommit.commit("Yue","Yue","a.txt modified.");
+        JitDiff.diffBranch("master", "test");
 
     }
 

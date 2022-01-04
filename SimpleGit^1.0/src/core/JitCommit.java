@@ -13,12 +13,14 @@ public class JitCommit {
             // 将暂存区生成的树、commit类、暂存区内包含的所有的树全部存入objects文件夹中
             index.compressWriteAsTree();
             com.compressWrite();
-            System.out.println("Commit key 为：" +com.getKey());
+
             writeTree(index);
             //读出HEAD当前所指向的Branch， 将branch向后一步, 最后覆写.
             Branch curbranch = Branch.getCurBranch();
             curbranch.updateBranch(com.getKey());
             curbranch.writeBranch();
+            System.out.println("[" +curbranch.getBranchName() + " " + com.getKey().substring(0, 7) + "] " + message);
+
         } catch (Exception e) {
             e.printStackTrace();
         }

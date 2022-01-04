@@ -37,6 +37,10 @@ public class Index extends Tree implements Serializable {
         String name = go.getName();
         String key = go.getKey();
 
+        Status status = Status.deserialize();
+        status.add(name);
+        status.writeStatus();
+
         // 获得命令执行时间
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String date = df.format(new Date());

@@ -59,7 +59,9 @@ public class FileCreation {
      */
 
     public static void recoverWorkTree(Tree t, String parentTree) throws IOException {
+        // tree 的 valuelist
         ArrayList<String> list = FileReader.readByBufferReader(t.getValue());
+
         for (int i = 0; i < list.size(); i++) {
             if (FileReader.readObjectFmt(list.get(i)).equals("blob")) {
                 Blob blob = Blob.deserialize(FileReader.readObjectKey(list.get(i)));

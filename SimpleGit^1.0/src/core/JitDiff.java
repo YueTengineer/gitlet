@@ -8,8 +8,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class JitDiff {
-    public static void diffBranch() {
-
+    public static void diffBranch(String brname1, String brname2) {
+        try {
+            Branch br1 = Branch.deserialize(brname1);
+            Branch br2 = Branch.deserialize(brname2);
+            Commit com1 = Commit.deserialize(br1.getCommitId());
+            Commit com2 = Commit.deserialize(br2.getCommitId());
+            Index ind1 = com1.getIndexTree();
+            Index ind2 = com2.getIndexTree();
+            compareIndex(ind1, ind2);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void diffCached() throws IOException {
@@ -19,47 +29,6 @@ public class JitDiff {
         Index lastindex = lastcommit.getIndexTree();
         Index cached = FileReader.readCompressedObj(Index.getPath(),Index.class);
         compareIndex(lastindex, cached);
-    }
-
-    private static void compareCached(Index ind1, Index ind2) throws IOException {
-        HashMap<String, String> nkblobmap1 = ind1.getNamekey_blobmap();
-        HashMap<String, String> nkblobmap2 = ind2.getNamekey_blobmap();
-
-        for (String name : nkblobmap2.keySet()) {
-            // 文件名相同的文件
-            if (nkblobmap1.containsKey(name)) {
-                String key1 = nkblobmap1.get(name);
-                String key2 = nkblobmap2.get(name);
-                // blob不等, 说明文件发生了改变.
-                if (!key1.equals(key2)) {
-                    Blob b1 = Blob.deserialize(key1);
-                    Blob b2 = Blob.deserialize(key2);
-                    // 比较之
-                    compareBlob(b1, b2);
-                    System.out.println();
-                }
-                // 比较过了，除去前一个.
-                nkblobmap1.remove(name);
-            }
-
-            // index2 新增文件.
-            else {
-                System.out.println("diff --jit a\\null b\\" + name);
-                System.out.println("new file mode 100644");
-                System.out.println("--- \\dev\\null");
-                System.out.println("+++ b\\" + name);
-                System.out.println();
-            }
-        }
-
-        // index2所缺少的
-        for (String name : nkblobmap1.keySet()) {
-            System.out.println("diff --jit a\\" + name + " b\\null");
-            System.out.println("deleted file mode 100644");
-            System.out.println("--- a\\" + name);
-            System.out.println("+++ \\dev\\null");
-            System.out.println();
-        }
     }
 
 
